@@ -217,7 +217,7 @@ download_package() {
         # Download bootstrap if requested
         if [ -n "$bootstrap" ]; then
             echo "Downloading bootstrap"
-            wget "https://storage.crownplatform.com/s/erB9Y95HkpA4Nmk/download" -O $dir/bootstrap.zip
+            wget "https://storage.crownplatform.com/s/5XgpC3fqk2F6qY7/download" -O $dir/bootstrap.zip
 	    if [ ! -e "$dir/bootstrap.zip" ]; then
 	        echo "Failed to download bootstrap. Continuing without it."
 	        bootstrap=
