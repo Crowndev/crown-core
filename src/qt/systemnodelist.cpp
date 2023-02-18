@@ -35,26 +35,6 @@ SystemnodeList::SystemnodeList(QWidget *parent) :
 
     ui->startButton->setEnabled(false);
 
-    int columnAliasWidth = 100;
-    int columnAddressWidth = 200;
-    int columnProtocolWidth = 60;
-    int columnStatusWidth = 80;
-    int columnActiveWidth = 130;
-    int columnLastSeenWidth = 130;
-
-    ui->tableWidgetMySystemnodes->setColumnWidth(0, columnAliasWidth);
-    ui->tableWidgetMySystemnodes->setColumnWidth(1, columnAddressWidth);
-    ui->tableWidgetMySystemnodes->setColumnWidth(2, columnProtocolWidth);
-    ui->tableWidgetMySystemnodes->setColumnWidth(3, columnStatusWidth);
-    ui->tableWidgetMySystemnodes->setColumnWidth(4, columnActiveWidth);
-    ui->tableWidgetMySystemnodes->setColumnWidth(5, columnLastSeenWidth);
-
-    ui->tableWidgetSystemnodes->setColumnWidth(0, columnAddressWidth);
-    ui->tableWidgetSystemnodes->setColumnWidth(1, columnProtocolWidth);
-    ui->tableWidgetSystemnodes->setColumnWidth(2, columnStatusWidth);
-    ui->tableWidgetSystemnodes->setColumnWidth(3, columnActiveWidth);
-    ui->tableWidgetSystemnodes->setColumnWidth(4, columnLastSeenWidth);
-
     ui->tableWidgetMySystemnodes->setContextMenuPolicy(Qt::CustomContextMenu);
 
     QAction *startAliasAction = new QAction(tr("Start alias"), this);
