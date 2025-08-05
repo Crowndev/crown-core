@@ -1,0 +1,169 @@
+name: Crown Platform Binaries
+on:
+  push:
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  RELEASE_VERSION: "0.14.0.4"
+  MAKEJOBS: "-j4"
+  SDK_URL: "https://bitcoincore.org/depends-sources/sdks"
+  WINEDEBUG: "fixme-all"
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            container: ubuntu:focal
+            host: x86_64-unknown-linux
+            goal: install
+            outdir: Crown-${{ env.RELEASE_VERSION }}-Linux64
+            crown_config: "--enable-glibc-back-compat"
+            dep_opts: "USE_LINUX_STATIC_QT5=1"
+            packages: >
+              make curl ca-certificates bzip2 libc6-dev gobjc++ g++
+              pkg-config patch autoconf automake libtool bsdmainutils
+              libleveldb-dev wget python3-dev libsnappy-dev
+          - os: ubuntu-latest
+            container: ubuntu:focal
+            host: i686-pc-linux-gnu
+            goal: install
+            outdir: Crown-${{ env.RELEASE_VERSION }}-Linux32
+            crown_config: "--enable-glibc-back-compat"
+            dep_opts: "USE_LINUX_STATIC_QT5=1"
+            packages: >
+              make curl ca-certificates bzip2 libc6-dev gobjc++ g++
+              pkg-config patch autoconf automake libtool bsdmainutils
+              libleveldb-dev wget python3-dev libsnappy-dev g++-multilib bc
+          - os: ubuntu-latest
+            container: ubuntu:focal
+            host: x86_64-w64-mingw32
+            goal: install
+            outdir: Crown-${{ env.RELEASE_VERSION }}-Win64
+            crown_config: "--enable-mingw"
+            packages: >
+              make curl ca-certificates bzip2 libc6-dev gobjc++ g++
+              pkg-config patch autoconf automake libtool bsdmainutils
+              libleveldb-dev wget python3-dev libsnappy-dev nsis
+              gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64
+              binutils-mingw-w64-x86-64 wine bc
+          - os: ubuntu-latest
+            container: ubuntu:focal
+            host: i686-w64-mingw32
+            goal: install
+            outdir: Crown-${{ env.RELEASE_VERSION }}-Win32
+            crown_config: ""
+            packages: >
+              make curl ca-certificates bzip2 libc6-dev gobjc++ g++
+              pkg-config patch autoconf automake libtool bsdmainutils
+              libleveldb-dev wget python3-dev libsnappy-dev nsis
+              g++-mingw-w64-i686 gcc-mingw-w64-i686
+              binutils-mingw-w64-i686 wine bc
+          - os: ubuntu-latest
+            container: ubuntu:focal
+            host: arm-linux-gnueabihf
+            goal: install
+            outdir: Crown-${{ env.RELEASE_VERSION }}-RaspberryPi
+            crown_config: "--enable-glibc-back-compat"
+            packages: >
+              make curl ca-certificates bzip2 libc6-dev gobjc++ g++
+              pkg-config patch autoconf automake libtool bsdmainutils
+              libleveldb-dev wget python3-dev libsnappy-dev
+              g++-arm-linux-gnueabihf
+
+    runs-on: ${{ matrix.os }}
+    container: ${{ matrix.container }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install build dependencies
+        run: |
+          if [ -n "${{ matrix.packages }}" ]; then
+            export DEBIAN_FRONTEND=noninteractive
+            apt-get update
+            apt-get install --no-install-recommends --no-upgrade -y ${{ matrix.packages }}
+          fi
+
+      - name: Restore depends cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            depends/built
+            depends/sdk-sources
+          key: crown-depends-${{ matrix.host }}-${{ hashFiles('depends/packages/**', 'depends/**/packages.mk', 'Makefile.am', 'configure.ac', 'src/**') }}
+
+      - name: Prepare depends & SDK
+        run: |
+          mkdir -p depends/SDKs depends/sdk-sources out
+          if [ -n "${OSX_SDK}" ] && [ ! -f depends/sdk-sources/MacOSX${OSX_SDK}.sdk.tar.gz ]; then
+            curl -Lf ${{ env.SDK_URL }}/MacOSX${OSX_SDK}.sdk.tar.gz -o depends/sdk-sources/MacOSX${OSX_SDK}.sdk.tar.gz
+          fi
+          if [ -n "${OSX_SDK}" ] && [ -f depends/sdk-sources/MacOSX${OSX_SDK}.sdk.tar.gz ]; then
+            tar -C depends/SDKs -xf depends/sdk-sources/MacOSX${OSX_SDK}.sdk.tar.gz
+          fi
+          make ${{ env.MAKEJOBS }} -C depends HOST=${{ matrix.host }} ${{ matrix.dep_opts }}
+
+      - name: Build Crown
+        run: |
+          set -e
+          ./autogen.sh
+          mkdir -p build && cd build
+          CROWN_CONFIG_ALL="--disable-reduced-exports --disable-dependency-tracking \
+            --prefix=$GITHUB_WORKSPACE/depends/${{ matrix.host }} \
+            --bindir=$GITHUB_WORKSPACE/${{ matrix.outdir }}/bin \
+            --libdir=$GITHUB_WORKSPACE/${{ matrix.outdir }}/lib"
+          ../configure --cache-file=config.cache $CROWN_CONFIG_ALL ${{ matrix.crown_config }}
+          make distdir VERSION=${{ matrix.host }}
+          cd crown-${{ matrix.host }}
+          ./configure --cache-file=../config.cache $CROWN_CONFIG_ALL ${{ matrix.crown_config }}
+          make ${{ env.MAKEJOBS }} ${{ matrix.goal }} || ( echo "Build failure. Verbose build follows." && make ${{ matrix.goal }} V=1 ; false )
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.outdir }}
+          path: ${{ matrix.outdir }}
+          retention-days: 30
+
+  release:
+    name: Create GitHub Release (on tag)
+    runs-on: ubuntu-latest
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Prepare zips per target
+        run: |
+          set -e
+          cd dist
+          for d in */ ; do
+            dir="${d%/}"
+            if [ -d "$dir" ]; then
+              (cd "$dir" && zip -r "../${dir}.zip" .)
+            fi
+          done
+
+      - name: Create Release and upload assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.zip
+            dist/**/bin/**
+            dist/**/lib/**
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
