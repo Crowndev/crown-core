@@ -13,6 +13,7 @@ define $(package)_configure_cmds
 endef
 
 define $(package)_build_cmds
+true
 endef
 
 define $(package)_stage_cmds

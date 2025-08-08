@@ -1,5 +1,5 @@
 packages:=boost openssl curl
-native_packages := native_ccache native_comparisontool
+native_packages := native_ccache native_comparisontool native_protobuf
 
 qt_native_packages = native_protobuf
 qt_packages = qrencode protobuf
