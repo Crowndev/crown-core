@@ -313,7 +313,7 @@ public:
         fTestnetToBeDeprecatedFieldRPC = false;
 
         nPoolMaxTransactions = 3;
-        strSporkKey = "0393a69774e3327f0a8618b9362f7e413569f687f0f35ddb0444b6ebcb0b116f25";
+        strSporkKey = "025b2806d881b0c14d672c8007947c6fa161e95627309b7182f61f4a096fdfb463";
         strDevfundAddress = "16tg5tuZrPKoBwfbmj2tmiEPhVPzyn3gtP";
         strLegacySignerDummyAddress = "18WTcWvwrNnfqeQAn6th9QQ2EpnXMq5Th8";
         nStartMasternodePayments = 1403728576; //Wed, 25 Jun 2014 20:36:16 GMT
@@ -443,7 +443,7 @@ public:
         fTestnetToBeDeprecatedFieldRPC = true;
 
         nPoolMaxTransactions = 2;
-        strSporkKey = "025eff2ae991a39bfbcb54b9afceebea0df0fa4ffb6d3708dddba9bc0129c1287b";
+        strSporkKey = "025b2806d881b0c14d672c8007947c6fa161e95627309b7182f61f4a096fdfb463";
         strDevfundAddress = "mr59c3aniaN3qHXej5L8UBsssRZbiUUMnz";
         strLegacySignerDummyAddress = "mr59c3aniaN3qHXej5L8UBsssRZbiUUMnz";
         nStartMasternodePayments = 1420837558; //Fri, 09 Jan 2015 21:05:58 GMT
