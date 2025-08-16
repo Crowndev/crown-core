@@ -1,7 +1,7 @@
 image: "ubuntu:jammy"
 
 variables:
-  RELEASE_VERSION: "0.14.0.4"
+  RELEASE_VERSION: "0.14.0.5"
   GIT_STRATEGY: "clone"
   MAKEJOBS: "-j4"
   CCACHE_SIZE: "100M"
