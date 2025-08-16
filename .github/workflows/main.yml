@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 env:
-  RELEASE_VERSION: "0.14.0.4"
+  RELEASE_VERSION: "0.14.0.5"
   MAKEJOBS: "-j4"
   SDK_URL: "https://bitcoincore.org/depends-sources/sdks"
   WINEDEBUG: "fixme-all"
