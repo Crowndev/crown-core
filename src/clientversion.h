@@ -17,7 +17,7 @@
 #define CLIENT_VERSION_MAJOR 0
 #define CLIENT_VERSION_MINOR 14
 #define CLIENT_VERSION_REVISION 0
-#define CLIENT_VERSION_BUILD 5
+#define CLIENT_VERSION_BUILD 6
 
 /**
  * Copyright year (2009-this)

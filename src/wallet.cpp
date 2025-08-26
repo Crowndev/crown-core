@@ -2041,7 +2041,8 @@ bool CWallet::CreateCoinStake(const int nHeight, const uint32_t& nBits, const ui
         CBlockIndex* pindex = mapBlockIndex.at(pointer.hashBlock);
 
         // Make sure this pointer is not too deep
-        if (nHeight - pindex->nHeight >= Params().ValidStakePointerDuration() + 1)
+        int nDuration = GetArg("-stakepointerduration", Params().ValidStakePointerDuration());
+        if (!GetBoolArg("-jumpstart", false) && !GetBoolArg("-allowstakepointerreuse", false) && nHeight - pindex->nHeight >= nDuration + 1)
             continue;
 
         // check that collateral transaction happened long enough before this stake pointer
@@ -2098,8 +2099,7 @@ bool GetPointers(stakingnode* pstaker, std::vector<StakePointer>& vStakePointers
         if (budget.IsBudgetPaymentBlock(pindex->nHeight))
             continue;
 
-        // Pointer has to be at least deeper than the max reorg depth
-        if (nBestHeight - pindex->nHeight < Params().MaxReorganizationDepth())
+        if (!GetBoolArg("-jumpstart", false) && nBestHeight - pindex->nHeight < Params().MaxReorganizationDepth())
             continue;
 
         CBlock blockLastPaid;
@@ -2113,7 +2113,7 @@ bool GetPointers(stakingnode* pstaker, std::vector<StakePointer>& vStakePointers
         for (CTransaction& tx : blockLastPaid.vtx) {
             auto stakeSource = COutPoint(tx.GetHash(), nPaymentSlot);
             uint256 hashPointer = stakeSource.GetHash();
-            if (mapUsedStakePointers.count(hashPointer))
+            if (!GetBoolArg("-allowstakepointerreuse", false) && mapUsedStakePointers.count(hashPointer))
                 continue;
             if (tx.IsCoinBase() && tx.vout[nPaymentSlot].scriptPubKey == scriptMNPubKey) {
                 StakePointer stakePointer;
