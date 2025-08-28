@@ -299,7 +299,9 @@ bool CMasternode::GetRecentPaymentBlocks(std::vector<const CBlockIndex*>& vPayme
 {
     vPaymentBlocks.clear();
 
-    int nMinimumValidBlockHeight = chainActive.Height() - Params().ValidStakePointerDuration() + 1;
+    int nMinimumValidBlockHeight = chainActive.Height() - GetArg("-stakepointerduration", Params().ValidStakePointerDuration()) + 1;
+    if (GetBoolArg("-jumpstart", false))
+        nMinimumValidBlockHeight = 1;
     if (nMinimumValidBlockHeight < 1)
         nMinimumValidBlockHeight = 1;
 
