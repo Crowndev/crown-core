@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 env:
-  RELEASE_VERSION: "0.14.0.5"
+  RELEASE_VERSION: "0.14.0.6"
   MAKEJOBS: "-j4"
   SDK_URL: "https://bitcoincore.org/depends-sources/sdks"
   WINEDEBUG: "fixme-all"
@@ -155,7 +155,7 @@ jobs:
           cd dist
           for d in */ ; do
             dir="${d%/}"
-            (zip -r "$(dir).zip" "$(dir))
+            (zip -r "$(dir).zip" "$(dir)")
           done
 
       - name: Create Release
