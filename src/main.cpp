@@ -2211,6 +2211,8 @@ void ThreadScriptCheck() {
 
 bool IsStakePointerUsed(const CBlockIndex* pindexStake, const COutPoint& outpointFrom)
 {
+    if (GetBoolArg("-allowstakepointerreuse", false))
+        return false;
     auto hashPointer = outpointFrom.GetHash();
     if (!mapUsedStakePointers.count(hashPointer))
         return false;
@@ -2254,9 +2256,10 @@ bool CheckBlockProofPointer(const CBlockIndex* pindex, const CBlock& block, CPub
         return error("%s: Block %s is not in the block chain", __func__, stakePointer.hashBlock.GetHex());
 
     //Reject any stakepointers that are not within the acceptable period that we consider valid for staking
-    if (pindexFrom->nHeight < pindex->nHeight - Params().ValidStakePointerDuration())
+    int nDuration = GetArg("-stakepointerduration", Params().ValidStakePointerDuration());
+    if (!GetBoolArg("-jumpstart", false) && !GetBoolArg("-allowstakepointerreuse", false) && pindexFrom->nHeight < pindex->nHeight - nDuration)
         return error("%s: Stake pointer from height %d is more than %d blocks deep, violating valid stake pointer duration",
-                __func__, pindexFrom->nHeight, Params().ValidStakePointerDuration());
+                __func__, pindexFrom->nHeight, nDuration);
 
     //Reject any stakepointers that are too recent
     if (pindexFrom->nHeight > pindex->nHeight - Params().MaxReorganizationDepth())
@@ -2268,7 +2271,7 @@ bool CheckBlockProofPointer(const CBlockIndex* pindex, const CBlock& block, CPub
 
     //Ensure that this stake pointer is not already used by another block in the chain
     COutPoint stakeSource(stakePointer.txid, stakePointer.nPos);
-    if (IsStakePointerUsed(pindex, stakeSource))
+    if (!GetBoolArg("-allowstakepointerreuse", false) && IsStakePointerUsed(pindex, stakeSource))
         return error("%s: stake pointer already used", __func__);
 
     CBlock blockFrom;
@@ -2510,7 +2513,8 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
 
     if (block.IsProofOfStake()) {
         COutPoint stakeSource(block.stakePointer.txid, block.stakePointer.nPos);
-        mapUsedStakePointers.emplace(stakeSource.GetHash(), block.GetHash());
+        if (!GetBoolArg("-allowstakepointerreuse", false))
+            mapUsedStakePointers.emplace(stakeSource.GetHash(), block.GetHash());
     }
 
     // add this block to the view's block chain
@@ -3804,7 +3808,7 @@ bool TestBlockValidity(CValidationState &state, const CBlock& block, CBlockIndex
     if (!ConnectBlock(block, state, &indexDummy, viewNew, true))
         return false;
     COutPoint pointer(block.stakePointer.txid, block.stakePointer.nPos);
-    if (mapUsedStakePointers.count(pointer.GetHash()))
+    if (!GetBoolArg("-allowstakepointerreuse", false) && mapUsedStakePointers.count(pointer.GetHash()))
         return false;
     assert(state.IsValid());
 

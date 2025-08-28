@@ -155,7 +155,7 @@ jobs:
           cd dist
           for d in */ ; do
             dir="${d%/}"
-            (cd "$dir" && zip -r "../${dir}.zip" .)
+            (zip -r "$(dir).zip" "$(dir)")
           done
 
       - name: Create Release
