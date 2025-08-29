@@ -460,8 +460,10 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += "  -blockminsize=<n>      " + strprintf(_("Set minimum block size in bytes (default: %u)"), 0) + "\n";
     strUsage += "  -blockmaxsize=<n>      " + strprintf(_("Set maximum block size in bytes (default: %d)"), DEFAULT_BLOCK_MAX_SIZE) + "\n";
     strUsage += "  -blockprioritysize=<n> " + strprintf(_("Set maximum size of high-priority/low-fee transactions in bytes (default: %d)"), DEFAULT_BLOCK_PRIORITY_SIZE) + "\n";
+    #ifdef EMERGENCY_STAKEPOINTERS
     strUsage += "  -stakepointerduration=<n> " + _("Valid stake pointer depth in blocks (1440 per day)") + "\n";
     strUsage += "  -allowstakepointerreuse   " + _("Allow using a stake pointer more than once (emergency only)") + "\n";
+    #endif
 
     strUsage += "\n" + _("RPC server options:") + "\n";
     strUsage += "  -server                " + _("Accept command line and JSON-RPC commands") + "\n";

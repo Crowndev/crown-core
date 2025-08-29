@@ -2041,9 +2041,13 @@ bool CWallet::CreateCoinStake(const int nHeight, const uint32_t& nBits, const ui
         CBlockIndex* pindex = mapBlockIndex.at(pointer.hashBlock);
 
         // Make sure this pointer is not too deep
-        int nDuration = GetArg("-stakepointerduration", Params().ValidStakePointerDuration());
-        if (!GetBoolArg("-jumpstart", false) && !GetBoolArg("-allowstakepointerreuse", false) && nHeight - pindex->nHeight >= nDuration + 1)
-            continue;
+        int nDuration = Params().ValidStakePointerDuration();
+#ifdef EMERGENCY_STAKEPOINTERS
+        nDuration = GetArg("-stakepointerduration", nDuration);
+        if(!GetBoolArg("-jumpstart", false) && !GetBoolArg("-allowstakepointerreuse", false))
+#endif
+        	if (nHeight - pindex->nHeight >= nDuration + 1)
+        		continue;
 
         // check that collateral transaction happened long enough before this stake pointer
         if (pindex->nHeight - Params().KernelModifierOffset() <= nActiveNodeInputHeight)
@@ -2098,9 +2102,13 @@ bool GetPointers(stakingnode* pstaker, std::vector<StakePointer>& vStakePointers
     for (auto pindex : vBlocksLastPaid) {
         if (budget.IsBudgetPaymentBlock(pindex->nHeight))
             continue;
-
-        if (!GetBoolArg("-jumpstart", false) && nBestHeight - pindex->nHeight < Params().MaxReorganizationDepth())
-            continue;
+            
+        // Pointer has to be at least deeper than the max reorg depth
+#ifdef EMERGENCY_STAKEPOINTERS
+        if(!GetBoolArg("-jumpstart", false))
+#endif
+			if (nBestHeight - pindex->nHeight < Params().MaxReorganizationDepth())
+				continue;
 
         CBlock blockLastPaid;
         if (!ReadBlockFromDisk(blockLastPaid, pindex)) {
@@ -2113,8 +2121,11 @@ bool GetPointers(stakingnode* pstaker, std::vector<StakePointer>& vStakePointers
         for (CTransaction& tx : blockLastPaid.vtx) {
             auto stakeSource = COutPoint(tx.GetHash(), nPaymentSlot);
             uint256 hashPointer = stakeSource.GetHash();
-            if (!GetBoolArg("-allowstakepointerreuse", false) && mapUsedStakePointers.count(hashPointer))
-                continue;
+#ifdef EMERGENCY_STAKEPOINTERS
+            if(!GetBoolArg("-allowstakepointerreuse", false))
+#endif
+            	if(mapUsedStakePointers.count(hashPointer))
+            		continue;
             if (tx.IsCoinBase() && tx.vout[nPaymentSlot].scriptPubKey == scriptMNPubKey) {
                 StakePointer stakePointer;
                 stakePointer.hashBlock = pindex->GetBlockHash();
