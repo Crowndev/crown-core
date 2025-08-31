@@ -7,7 +7,7 @@
 #
 # Setup crown server or update existing one
 
-LATEST_RELEASE="0.14.0.6"
+LATEST_RELEASE="0.14.0.7"
 
 systemnode=false
 masternode=false
